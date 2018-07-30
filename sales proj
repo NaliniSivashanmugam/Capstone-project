@@ -1,0 +1,34 @@
+demanddf = read.csv("demand_nali.csv")
+P1 = subset(demanddf, productcode == "P1")
+P1
+plot(P1$period, P1$sales)
+lmP1 = lm(sales ~ period, P1)
+summary(lmP1)
+
+df = read.csv("quality_Input.csv") # read input into dataframe
+df = df[,-1] # remove Batchno since it is not used for classification
+# partition into training (80%) and test (20%) sets
+seed = 1000 # you can change seed value to get other partitions
+set.seed(seed)
+testRows = sample(1:nrow(df), round(0.2*nrow(df))) # row numbers for test set
+test = df[testRows,] # dataframe with 500 test observations 
+train = df[-testRows,] # dataframe with 2000 training observations
+
+library(rpart)
+modQ = rpart(BATCHQUALITY ~ ., data=train, method="class")
+library(rpart.plot)
+prp(modQ)
+
+predictedTrain = predict(modQ, train, type="class")
+actualTrain = train$BATCHQUALITY
+cmTrain = table(actualTrain, predictedTrain)
+accTrain = sum(diag(cmTrain))/sum(cmTrain)
+accTrain
+cmTrain
+
+predictedTest = predict(modQ, test, type="class")
+actualTest = test$BATCHQUALITY
+cmTest = table(actualTest, predictedTest)
+accTest = sum(diag(cmTest))/sum(cmTest)
+accTest
+cmTest
